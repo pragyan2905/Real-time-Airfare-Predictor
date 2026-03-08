@@ -1,35 +1,28 @@
-# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 *.db
 
-# Virtual environments
 venv/
 .env/
 .env.*
 
-# Secrets
+
 .env
 
-# MLflow
 mlruns/
 mlflow.db
 
-# Models
 models/*.pkl
 models/*.joblib
 
-# Data
+
 data/raw/
 data/processed/
 
-# OS files
 .DS_Store
 
-# Logs
 *.log
 
-# Notebooks checkpoints
 .ipynb_checkpoints/
