@@ -2,12 +2,20 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import joblib
 import pandas as pd
+import mlflow.pyfunc
+import mlflow
+
+
+mlflow.set_tracking_uri("http://127.0.0.1:5000")
+
+app = FastAPI()
+
+model = mlflow.pyfunc.load_model("models:/flight_price_model/latest")
 
 app = FastAPI(title="Flight Price Prediction API")
 
-MODEL_PATH = "models/price_model.pkl"
 
-model = joblib.load(MODEL_PATH)
+model = mlflow.pyfunc.load_model("models:/flight_price_model/latest")
 
 
 class FlightFeatures(BaseModel):

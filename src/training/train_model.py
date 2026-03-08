@@ -85,7 +85,11 @@ def run_training_pipeline():
         mlflow.log_metric("MAE", mae)
 
         # log model artifact
-        mlflow.sklearn.log_model(model, "model")
+        mlflow.sklearn.log_model(
+            model,
+            artifact_path="model",
+            registered_model_name="flight_price_model"
+)
 
         # save model locally
         joblib.dump(model, MODEL_PATH)
