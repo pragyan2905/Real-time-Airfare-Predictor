@@ -1,23 +1,18 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
-import joblib
-import pandas as pd
-import mlflow.pyfunc
 import mlflow
-
-
-mlflow.set_tracking_uri("http://127.0.0.1:5000")
+import pandas as pd
+from pydantic import BaseModel
 
 app = FastAPI()
 
+# Connect to MLflow server
+mlflow.set_tracking_uri("http://127.0.0.1:5000")
+
+# Load model from MLflow Model Registry
 model = mlflow.pyfunc.load_model("models:/flight_price_model/latest")
 
-app = FastAPI(title="Flight Price Prediction API")
 
-
-model = mlflow.pyfunc.load_model("models:/flight_price_model/latest")
-
-
+# Request schema
 class FlightFeatures(BaseModel):
     stops: int
     days_until_departure: int
@@ -27,38 +22,19 @@ class FlightFeatures(BaseModel):
 
 
 @app.get("/")
-def root():
+def home():
     return {"status": "API is running"}
 
 
-@app.get("/health")
-def health_check():
-    return {"model_loaded": True}
-
-
 @app.post("/predict")
-def predict(features: FlightFeatures):
+def predict(data: FlightFeatures):
 
-    df = pd.DataFrame(
-        [[
-            features.stops,
-            features.days_until_departure,
-            features.route_avg_price,
-            features.route_price_std,
-            features.airline_frequency
-        ]],
-        columns=[
-            "stops",
-            "days_until_departure",
-            "route_avg_price",
-            "route_price_std",
-            "airline_frequency"
-        ]
-    )
+    # Convert input to dataframe
+    df = pd.DataFrame([data.dict()])
 
+    # Predict
     prediction = model.predict(df)[0]
 
     return {
-        "input": features,
         "predicted_price": float(prediction)
     }
