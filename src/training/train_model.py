@@ -1,18 +1,21 @@
 import pandas as pd
+import mlflow
+import mlflow.sklearn
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
 import lightgbm as lgb
 import joblib
 
-
 DATA_PATH = "data/processed/features.csv"
 MODEL_PATH = "models/price_model.pkl"
 
+# connect to MLflow server
+mlflow.set_tracking_uri("http://127.0.0.1:5000")
+mlflow.set_experiment("flight_price_prediction")
+
 
 def load_data():
-
     df = pd.read_csv(DATA_PATH)
-
     return df
 
 
@@ -27,7 +30,6 @@ def prepare_features(df):
     ]
 
     X = df[feature_columns]
-
     y = df["price"]
 
     return X, y
@@ -46,29 +48,9 @@ def train_model(X_train, y_train):
     return model
 
 
-def evaluate_model(model, X_test, y_test):
-
-    predictions = model.predict(X_test)
-
-    mae = mean_absolute_error(y_test, predictions)
-
-    print("\nModel Evaluation")
-    print("----------------")
-    print("MAE:", mae)
-
-    return mae
-
-
-def save_model(model):
-
-    joblib.dump(model, MODEL_PATH)
-
-    print("\nModel saved to:", MODEL_PATH)
-
-
 def run_training_pipeline():
 
-    print("\nLoading feature dataset...")
+    print("Loading dataset...")
 
     df = load_data()
 
@@ -81,15 +63,31 @@ def run_training_pipeline():
         random_state=42
     )
 
-    print("\nTraining model...")
+    with mlflow.start_run():
 
-    model = train_model(X_train, y_train)
+        print("Training model...")
 
-    evaluate_model(model, X_test, y_test)
+        model = train_model(X_train, y_train)
 
-    save_model(model)
+        predictions = model.predict(X_test)
 
+        mae = mean_absolute_error(y_test, predictions)
 
-if __name__ == "__main__":
+        print("MAE:", mae)
 
-    run_training_pipeline()
+        # log parameters
+        mlflow.log_param("model_type", "LightGBM")
+        mlflow.log_param("n_estimators", 200)
+        mlflow.log_param("learning_rate", 0.05)
+        mlflow.log_param("max_depth", 6)
+
+        # log metric
+        mlflow.log_metric("MAE", mae)
+
+        # log model artifact
+        mlflow.sklearn.log_model(model, "model")
+
+        # save model locally
+        joblib.dump(model, MODEL_PATH)
+
+        print("Model saved to:", MODEL_PATH)

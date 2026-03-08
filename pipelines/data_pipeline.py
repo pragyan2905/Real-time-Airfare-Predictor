@@ -1,5 +1,6 @@
 import sys
 import os
+import pandas as pd
 
 # Add project root to Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -12,14 +13,37 @@ def run_pipeline():
 
     client = AmadeusClient()
 
-    df = client.get_flights(
-        origin="DEL",
-        destination="LHR",
-        departure_date="2026-05-10"
-    )
+    routes = [
+        ("DEL", "LHR"),
+        ("DEL", "DXB"),
+        ("DEL", "SIN"),
+        ("DEL", "BOM"),
+        ("DEL", "JFK"),
+    ]
 
-    print("\nFetched Flight Data:\n")
-    print(df)
+    dates = [
+        "2026-05-10",
+        "2026-06-10",
+        "2026-07-10"
+    ]
+
+    all_data = []
+
+    for origin, destination in routes:
+        for departure_date in dates:
+
+            df = client.get_flights(
+                origin=origin,
+                destination=destination,
+                departure_date=departure_date
+            )
+
+            all_data.append(df)
+
+    df = pd.concat(all_data, ignore_index=True)
+
+    print("\nCollected Data:\n")
+    print(df.head())
 
     save_flights(df)
 
